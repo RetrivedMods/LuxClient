@@ -1,19 +1,21 @@
 package com.retrivedmods.luxclient.overlay
 
+import androidx.compose.foundation.clickable
 import android.content.res.Configuration
 import android.view.WindowManager
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.contentColorFor
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -28,10 +30,7 @@ class OverlayShortcutButton(
 
     private val _layoutParams by lazy {
         super.layoutParams.apply {
-
-            layoutInDisplayCutoutMode =
-                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-
+            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
             windowAnimations = android.R.style.Animation_Toast
             x = module.shortcutX
             y = module.shortcutY
@@ -47,46 +46,60 @@ class OverlayShortcutButton(
         val width = context.resources.displayMetrics.widthPixels
         val height = context.resources.displayMetrics.heightPixels
         val configuration = LocalConfiguration.current
-        val isLandScape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-        val color by animateColorAsState(
-            targetValue = if (module.isEnabled) MaterialTheme.colorScheme.primary else contentColorFor(
-                MaterialTheme.colorScheme.surfaceContainerLow
-            ),
-            label = "animateColor"
+        val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+        val borderColor by animateColorAsState(
+            targetValue = if (module.isEnabled) Color(0xFF8C00FF) else Color.Transparent,
+            label = "borderColor"
         )
 
-        LaunchedEffect(isLandScape) {
+        val backgroundGradient = Brush.verticalGradient(
+            colors = listOf(
+                Color(0xFF111111), // top
+                Color(0xFF000000)  // bottom
+            )
+        )
+
+        val textColor by animateColorAsState(
+            targetValue = if (module.isEnabled) Color(0xFF8C00FF) else Color.White,
+            label = "textColor"
+        )
+
+        LaunchedEffect(isLandscape) {
             _layoutParams.x = min(width, _layoutParams.x)
             _layoutParams.y = min(height, _layoutParams.y)
             windowManager.updateViewLayout(composeView, _layoutParams)
             updateShortcut()
         }
 
-        ElevatedCard(
-            onClick = {
-                module.isEnabled = !module.isEnabled
-            },
-            shape = CircleShape,
+        Box(
             modifier = Modifier
-                .padding(5.dp)
+                .width(110.dp)
+                .height(44.dp)
+                .padding(6.dp)
                 .pointerInput(Unit) {
                     detectDragGestures { _, dragAmount ->
-                        _layoutParams.x += (dragAmount.x).toInt()
-                        _layoutParams.y += (dragAmount.y).toInt()
-                        windowManager.updateViewLayout(
-                            composeView, _layoutParams
-                        )
+                        _layoutParams.x += dragAmount.x.toInt()
+                        _layoutParams.y += dragAmount.y.toInt()
+                        windowManager.updateViewLayout(composeView, _layoutParams)
                         updateShortcut()
                     }
                 }
+                .shadow(8.dp, RoundedCornerShape(14.dp))
+                .background(backgroundGradient, shape = RoundedCornerShape(14.dp))
+                .border(2.dp, borderColor, RoundedCornerShape(14.dp))
+                .clickable { module.isEnabled = !module.isEnabled }
         ) {
-            Text(
-                module.name.translatedSelf,
-                style = MaterialTheme.typography.bodyMedium,
-                color = color,
-                modifier = Modifier
-                    .padding(10.dp)
-            )
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = module.name.translatedSelf,
+                    color = textColor,
+                    style = MaterialTheme.typography.labelMedium
+                )
+            }
         }
     }
 
@@ -94,5 +107,4 @@ class OverlayShortcutButton(
         module.shortcutX = _layoutParams.x
         module.shortcutY = _layoutParams.y
     }
-
 }
