@@ -6,7 +6,11 @@ import com.retrivedmods.luxclient.game.module.misc.AntiKickModule
 import com.retrivedmods.luxclient.application.AppContext
 import com.retrivedmods.luxclient.game.module.combat.AntiCrystalModule
 import com.retrivedmods.luxclient.game.module.combat.AntiKnockbackModule
+import com.retrivedmods.luxclient.game.module.combat.AutoClickerModule
+import com.retrivedmods.luxclient.game.module.combat.HitboxModule
 import com.retrivedmods.luxclient.game.module.combat.KillauraModule
+import com.retrivedmods.luxclient.game.module.combat.OpFightBotModule
+import com.retrivedmods.luxclient.game.module.combat.TPAuraModule
 import com.retrivedmods.luxclient.game.module.misc.DesyncModule
 import com.retrivedmods.luxclient.game.module.misc.NoClipModule
 import com.retrivedmods.luxclient.game.module.visual.ESPModule
@@ -16,17 +20,21 @@ import com.retrivedmods.luxclient.game.module.misc.TimeShiftModule
 import com.retrivedmods.luxclient.game.module.misc.WeatherControllerModule
 import com.retrivedmods.luxclient.game.module.motion.AirJumpModule
 import com.retrivedmods.luxclient.game.module.motion.AntiAFKModule
-import com.retrivedmods.luxclient.game.module.motion.AutoWalkModule
 import com.retrivedmods.luxclient.game.module.motion.BhopModule
 import com.retrivedmods.luxclient.game.module.motion.FlyModule
 import com.retrivedmods.luxclient.game.module.motion.HighJumpModule
 import com.retrivedmods.luxclient.game.module.motion.JetPackModule
 import com.retrivedmods.luxclient.game.module.motion.MotionFlyModule
 import com.retrivedmods.luxclient.game.module.motion.MotionVarModule
+import com.retrivedmods.luxclient.game.module.motion.PlayerTPModule
 import com.retrivedmods.luxclient.game.module.motion.SpeedModule
 import com.retrivedmods.luxclient.game.module.motion.SprintModule
+import com.retrivedmods.luxclient.game.module.visual.DamageTextModule
 import com.retrivedmods.luxclient.game.module.visual.FreeCameraModule
+import com.retrivedmods.luxclient.game.module.visual.NightVisionModule
 import com.retrivedmods.luxclient.game.module.visual.NoHurtCameraModule
+import com.retrivedmods.luxclient.game.module.visual.PingStatsModule
+import com.retrivedmods.luxclient.game.module.visual.PlayerJoinModule
 import com.retrivedmods.luxclient.game.module.visual.ZoomModule
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -53,6 +61,12 @@ object ModuleManager {
             add(ZoomModule())
             add(AirJumpModule())
             add(ESPModule())
+            add(DamageTextModule())
+            add(PlayerJoinModule())
+            add(NightVisionModule())
+            add(AutoClickerModule())
+            add(HitboxModule())
+            add(PlayerTPModule())
             add(NoClipModule())
             add(SpeedModule())
             add(JetPackModule())
@@ -61,7 +75,9 @@ object ModuleManager {
             add(BhopModule())
             add(SprintModule())
             add(NoHurtCameraModule())
-            add(AutoWalkModule())
+            add(OpFightBotModule())
+            add(PingStatsModule())
+            add(TPAuraModule())
             add(AntiAFKModule())
             add(DesyncModule())
             add(PositionLoggerModule())
