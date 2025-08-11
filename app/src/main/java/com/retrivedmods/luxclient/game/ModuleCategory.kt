@@ -21,10 +21,6 @@ enum class ModuleCategory(
         iconResId = R.drawable.view_in_ar_24px,
         labelResId = R.string.visual
     ),
-    Effect(
-        iconResId = R.drawable.masked_transitions_24px,
-        labelResId = R.string.effect
-    ),
     Misc(
         iconResId = R.drawable.toc_24px,
         labelResId = R.string.misc
@@ -33,5 +29,6 @@ enum class ModuleCategory(
         iconResId = R.drawable.manufacturing_24px,
         labelResId = R.string.config
     )
+
 
 }

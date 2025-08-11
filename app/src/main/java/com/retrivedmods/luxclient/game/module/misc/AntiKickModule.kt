@@ -6,7 +6,7 @@ import com.retrivedmods.luxclient.game.ModuleCategory
 import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
 import org.cloudburstmc.protocol.bedrock.packet.DisconnectPacket
 
-class AntiKickModule : Module("antikick", ModuleCategory.Misc) {
+class AntiKickModule : Module("AntiKick", ModuleCategory.Misc) {
 
 override fun beforePacketBound(interceptablePacket: InterceptablePacket) {
         val packet = interceptablePacket.packet
