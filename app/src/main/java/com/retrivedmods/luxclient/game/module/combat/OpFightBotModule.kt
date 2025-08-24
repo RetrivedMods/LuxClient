@@ -12,17 +12,17 @@ import org.cloudburstmc.protocol.bedrock.packet.PlayerAuthInputPacket
 import kotlin.math.*
 import kotlin.random.Random
 
-class OpFightBotModule : Module("OpFightBot", ModuleCategory.Motion) {
+class OpFightBotModule : Module("OpFightBot", ModuleCategory.Combat) {
 
     private var playersOnly by boolValue("Players Only", false)
     private var filterInvisible by boolValue("Filter Invisible", true)
 
-    private var mode by intValue("Mode", 1, 0..2)
+    private var mode by intValue("Mode", 1, 0..2) // 0=random, 1=strafe, 2=behind
     private var range by floatValue("Range", 2.5f, 1.5f..5.0f)
     private var passive by boolValue("Passive", false)
 
-    private var hSpeed by floatValue("horizontalSpeed", 5.0f, 1.0f..7.0f)
-    private var vSpeed by floatValue("verticalSpeed", 4.0f, 1.0f..7.0f)
+    private var hSpeed by floatValue("Horizontal Speed", 5.0f, 1.0f..7.0f)
+    private var vSpeed by floatValue("Vertical Speed", 4.0f, 1.0f..7.0f)
     private var strafeSpeed by intValue("Strafe Speed", 20, 10..90)
 
     private var attack by boolValue("Attack", true)
@@ -50,6 +50,7 @@ class OpFightBotModule : Module("OpFightBot", ModuleCategory.Motion) {
         val targetPos = target.vec3Position
 
         if (distance < range) {
+            // --- Strafe or orbit around target ---
             val angle = when (mode) {
                 0 -> Random.nextDouble() * 360.0
                 1 -> (player.tickExists * strafeSpeed) % 360.0
@@ -59,23 +60,30 @@ class OpFightBotModule : Module("OpFightBot", ModuleCategory.Motion) {
 
             val rad = Math.toRadians(angle)
             val newPos = Vector3f.from(
-                targetPos.x - sin(rad) * range,
-                (targetPos.y + 0.5f).toDouble(),
-                targetPos.z + cos(rad) * range
+                (targetPos.x - sin(rad) * range).toFloat(),
+                (targetPos.y + 0.5f).toFloat(),
+                (targetPos.z + cos(rad) * range).toFloat()
             )
 
-            val yaw = atan2(targetPos.z - playerPos.z, targetPos.x - playerPos.x).toFloat() + Math.toRadians(90.0).toFloat()
-            val pitch = -atan2(targetPos.y - playerPos.y, playerPos.horizontalDistance(targetPos)).toFloat()
+            // --- Correct yaw/pitch ---
+            val dx = targetPos.x - playerPos.x
+            val dy = targetPos.y - playerPos.y
+            val dz = targetPos.z - playerPos.z
+            val horizDist = sqrt(dx * dx + dz * dz)
+
+            val yaw = (Math.toDegrees(atan2(-dx, dz).toDouble()) % 360).toFloat()
+            val pitch = (Math.toDegrees((-atan2(dy, horizDist)).toDouble()) % 360).toFloat()
 
             session.clientBound(MovePlayerPacket().apply {
                 runtimeEntityId = player.runtimeEntityId
                 position = newPos
-                rotation = Vector3f.from(pitch, yaw, yaw)
+                rotation = Vector3f.from(pitch, yaw, yaw) // pitch, yaw, headYaw
                 mode = MovePlayerPacket.Mode.NORMAL
                 isOnGround = true
                 tick = player.tickExists
             })
 
+            // --- Attack ---
             if (attack && (currentTime - lastAttackTime) >= (1000L / cps)) {
                 repeat(packets) {
                     player.attack(target)
@@ -83,11 +91,15 @@ class OpFightBotModule : Module("OpFightBot", ModuleCategory.Motion) {
                 lastAttackTime = currentTime
             }
         } else if (!passive) {
-            val dir = atan2(targetPos.z - playerPos.z, targetPos.x - playerPos.x) - Math.toRadians(90.0).toFloat()
+            // --- Move toward target if too far ---
+            val dx = targetPos.x - playerPos.x
+            val dz = targetPos.z - playerPos.z
+            val dir = atan2(dz, dx)
+
             val newPos = Vector3f.from(
-                playerPos.x - sin(dir) * hSpeed,
+                playerPos.x + cos(dir) * hSpeed,
                 targetPos.y.coerceIn(playerPos.y - vSpeed, playerPos.y + vSpeed),
-                playerPos.z + cos(dir) * hSpeed
+                playerPos.z + sin(dir) * hSpeed
             )
 
             session.clientBound(MovePlayerPacket().apply {
@@ -103,11 +115,10 @@ class OpFightBotModule : Module("OpFightBot", ModuleCategory.Motion) {
 
     private fun isEntityInvisible(entity: Entity): Boolean {
         if (!filterInvisible) return false
-
         if (entity.vec3Position.y < -30) return true
 
-        val flags = entity.metadata[EntityDataTypes.FLAGS] as? Long
-        if (flags != null && (flags and (1L shl 5)) != 0L) return true
+        val flags = entity.metadata[EntityDataTypes.FLAGS]
+        if (flags is Number && (flags.toLong() and (1L shl 5)) != 0L) return true
 
         val name = entity.metadata[EntityDataTypes.NAME] as? String ?: ""
         return name.contains("invisible", ignoreCase = true) || name.isEmpty()
@@ -119,6 +130,9 @@ class OpFightBotModule : Module("OpFightBot", ModuleCategory.Motion) {
         val dz = z - other.z
         return dx * dx + dy * dy + dz * dz
     }
+
+    private fun Vector3f.distance(other: Vector3f): Float =
+        sqrt(distanceSquared(other))
 
     private fun Vector3f.horizontalDistance(other: Vector3f): Float {
         val dx = x - other.x

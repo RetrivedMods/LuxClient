@@ -1,4 +1,4 @@
-package com.retrivedmods.luxclient.game.module.misc
+package com.retrivedmods.luxclient.game.module.motion
 
 import com.retrivedmods.luxclient.game.InterceptablePacket
 import com.retrivedmods.luxclient.game.Module
@@ -10,8 +10,12 @@ import org.cloudburstmc.protocol.bedrock.data.command.CommandPermission
 import org.cloudburstmc.protocol.bedrock.packet.PlayerAuthInputPacket
 import org.cloudburstmc.protocol.bedrock.packet.RequestAbilityPacket
 import org.cloudburstmc.protocol.bedrock.packet.UpdateAbilitiesPacket
+import org.cloudburstmc.math.vector.Vector3f
+import org.cloudburstmc.protocol.bedrock.data.PlayerAuthInputData
+import org.cloudburstmc.protocol.bedrock.packet.SetEntityMotionPacket
 
-class NoClipModule : Module("no_clip", ModuleCategory.Misc) {
+class NoClipModule : Module("no_clip", ModuleCategory.Motion) {
+    private var moveSpeed by floatValue("speed", 0.15f, 0.1f..1.5f)
 
     private val enableNoClipAbilitiesPacket = UpdateAbilitiesPacket().apply {
         playerPermission = PlayerPermission.OPERATOR
@@ -65,7 +69,6 @@ class NoClipModule : Module("no_clip", ModuleCategory.Misc) {
 
     private var noClipEnabled = false
 
-
     override fun beforePacketBound(interceptablePacket: InterceptablePacket) {
         val packet = interceptablePacket.packet
         if (packet is RequestAbilityPacket && packet.ability == Ability.NO_CLIP) {
@@ -87,8 +90,27 @@ class NoClipModule : Module("no_clip", ModuleCategory.Misc) {
                 disableNoClipAbilitiesPacket.uniqueEntityId = session.localPlayer.uniqueEntityId
                 session.clientBound(disableNoClipAbilitiesPacket)
                 noClipEnabled = false
+                return
+            }
+
+            if (isEnabled) {
+                var verticalMotion = 0f
+
+
+                if (packet.inputData.contains(PlayerAuthInputData.JUMPING)) {
+                    verticalMotion = moveSpeed
+                } else if (packet.inputData.contains(PlayerAuthInputData.SNEAKING)) {
+                    verticalMotion = -moveSpeed
+                }
+
+                if (verticalMotion != 0f) {
+                    val motionPacket = SetEntityMotionPacket().apply {
+                        runtimeEntityId = session.localPlayer.uniqueEntityId
+                        motion = Vector3f.from(0f, verticalMotion, 0f)
+                    }
+                    session.clientBound(motionPacket)
+                }
             }
         }
     }
-
 }

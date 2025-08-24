@@ -12,7 +12,7 @@ import com.retrivedmods.luxclient.game.module.combat.KillauraModule
 import com.retrivedmods.luxclient.game.module.combat.OpFightBotModule
 import com.retrivedmods.luxclient.game.module.combat.TPAuraModule
 import com.retrivedmods.luxclient.game.module.misc.DesyncModule
-import com.retrivedmods.luxclient.game.module.misc.NoClipModule
+import com.retrivedmods.luxclient.game.module.motion.NoClipModule
 import com.retrivedmods.luxclient.game.module.visual.ESPModule
 import com.retrivedmods.luxclient.game.module.misc.PlayerTracerModule
 import com.retrivedmods.luxclient.game.module.misc.PositionLoggerModule

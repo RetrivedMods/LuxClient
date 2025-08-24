@@ -3,7 +3,11 @@ package com.retrivedmods.luxclient.game.module.combat
 import com.retrivedmods.luxclient.game.InterceptablePacket
 import com.retrivedmods.luxclient.game.Module
 import com.retrivedmods.luxclient.game.ModuleCategory
-import com.retrivedmods.luxclient.game.entity.*
+import com.retrivedmods.luxclient.game.entity.Entity
+import com.retrivedmods.luxclient.game.entity.EntityUnknown
+import com.retrivedmods.luxclient.game.entity.LocalPlayer
+import com.retrivedmods.luxclient.game.entity.MobList
+import com.retrivedmods.luxclient.game.entity.Player
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.protocol.bedrock.packet.PlayerAuthInputPacket
 
@@ -12,7 +16,7 @@ class AutoClickerModule : Module("AutoClicker", ModuleCategory.Combat) {
     private var cpsValue by intValue("cps", 12, 1..20)
     private var playersOnly by boolValue("players_only", true)
     private var mobsOnly by boolValue("mobs_only", false)
-    private var rangeValue by floatValue("Range", 4.0f, 2f..8f)
+    private var rangeValue by floatValue("range", 4.0f, 2f..6f)
     private var lastAttackTime = 0L
 
     override fun beforePacketBound(interceptablePacket: InterceptablePacket) {
@@ -105,7 +109,7 @@ class AutoClickerModule : Module("AutoClicker", ModuleCategory.Combat) {
 
     private fun Player.isBot(): Boolean {
         if (this is LocalPlayer) return false
-        val playerList = session.level.playerMap[this.uuid] ?: return true
+        val playerList = session.level.playerMap[this.uuid] ?: return false // treat unknown players as real players
         return playerList.name.isBlank()
     }
 }

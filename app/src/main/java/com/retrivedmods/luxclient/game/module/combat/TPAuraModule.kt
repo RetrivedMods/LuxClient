@@ -36,6 +36,7 @@ class TPAuraModule : Module("EnemyHunter", ModuleCategory.Combat) {
         val player = session.localPlayer
         val target = findTarget() ?: return
 
+        // --- Attacking ---
         val attackInterval = 1000L / cps
         if (attackDelta >= attackInterval) {
             repeat(packetsPerAttack) {
@@ -47,6 +48,7 @@ class TPAuraModule : Module("EnemyHunter", ModuleCategory.Combat) {
         if (moveDelta < 20) return
         lastMoveTime = now
 
+        // --- Movement ---
         val playerPos = player.vec3Position
         val targetPos = target.vec3Position
 
@@ -58,7 +60,7 @@ class TPAuraModule : Module("EnemyHunter", ModuleCategory.Combat) {
         val speedScale = baseSpeed + (distance / 3.5)
         val moveVec = if (distance > 4) {
             val direction = Vector3f.from(dx.toFloat(), dy.toFloat(), dz.toFloat()).normalize()
-            direction.mul(speedScale).add(jitterVec())
+            direction.mul(speedScale.toFloat()).add(jitterVec())
         } else {
             angle = (angle + speedScale * 40) % 360
             val rad = Math.toRadians(angle)
@@ -66,7 +68,7 @@ class TPAuraModule : Module("EnemyHunter", ModuleCategory.Combat) {
             val offsetZ = sin(rad) * strafeRadius
             Vector3f.from(
                 offsetX.toFloat() + jitter(),
-                jitter(),
+                0f,
                 offsetZ.toFloat() + jitter()
             )
         }
@@ -79,7 +81,7 @@ class TPAuraModule : Module("EnemyHunter", ModuleCategory.Combat) {
 
         if (!noClip && isPathBlocked(player.vec3Position, newPosition)) return
 
-        // --- Smooth Rotation ---
+
         val lookDX = targetPos.x - playerPos.x
         val lookDY = (targetPos.y + yOffset) - playerPos.y
         val lookDZ = targetPos.z - playerPos.z
@@ -99,7 +101,8 @@ class TPAuraModule : Module("EnemyHunter", ModuleCategory.Combat) {
         player.rotationYawHead = newYaw
         player.rotationPitch = newPitch
 
-        val rotationVec = Vector3f.from(newYaw, newPitch, 0f)
+        // Important: Bedrock expects pitch, yaw, headYaw
+        val rotationVec = Vector3f.from(newPitch, newYaw, newYaw)
 
         session.clientBound(MovePlayerPacket().apply {
             runtimeEntityId = player.runtimeEntityId
@@ -129,7 +132,7 @@ class TPAuraModule : Module("EnemyHunter", ModuleCategory.Combat) {
         ((Math.random() - 0.5) * 2 * jitterPower).toFloat()
 
     private fun jitterVec(): Vector3f =
-        Vector3f.from(jitter().toDouble(), jitter().toDouble(), jitter().toDouble())
+        Vector3f.from(jitter(), 0f, jitter()) // jitter only on X/Z to avoid vertical desync
 
     private fun isPathBlocked(start: Vector3f, end: Vector3f): Boolean {
         // TODO: Implement real block collision
@@ -140,6 +143,7 @@ class TPAuraModule : Module("EnemyHunter", ModuleCategory.Combat) {
         var delta = (target - old) % 360.0f
         if (delta > 180f) delta -= 360f
         if (delta < -180f) delta += 360f
-        return (old + delta * factor) % 360.0f
+        val result = old + delta * factor
+        return (result + 360f) % 360f // wrap properly into [0,360)
     }
 }
